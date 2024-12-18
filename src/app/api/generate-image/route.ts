@@ -5,13 +5,28 @@ export async function POST(request: Request) {
     const body = await request.json();
     const { text } = body;
 
+    console.log("Text: ",text);
+
     // TODO: Call your Image Generation API here
     // For now, we'll just echo back the text
+    const response = await fetch(`https://jballo--example-hello-world-model-generate-dev.modal.run/?prompt=${text}`);
 
-    return NextResponse.json({
-      success: true,
-      message: `Received: ${text}`,
-    });
+    if (!response.ok){
+      return NextResponse.json(
+        { success: false, error: "Failed to get image"},
+        { status: 500 }
+      );
+    }
+
+    console.log(response);
+
+    const blob = await response.blob();
+
+    const headers = new Headers();
+
+    headers.set("Content-Type", "image/*");
+
+    return new NextResponse(blob, { status: 200, statusText: "OK", headers});
   } catch (error) {
     return NextResponse.json(
       { success: false, error: "Failed to process request" },

@@ -1,12 +1,15 @@
 "use client";
 
 import { useState } from "react";
+import { Image } from "@nextui-org/image";
 
 
 
 export default function ImageGenerate() {
     const [inputText, setInputText] = useState("");
       const [isLoading, setIsLoading] = useState(false);
+
+      const [imageSrc, setImageSrc] = useState("https://nextui.org/images/hero-card-complete.jpeg")
     
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -21,8 +24,12 @@ export default function ImageGenerate() {
             body: JSON.stringify({ text: inputText }),
           });
     
-          const data = await response.json();
-          console.log(data);
+          const blob = await response.blob();
+
+          const src = URL.createObjectURL(blob);
+
+          setImageSrc(src);
+
           setInputText("");
         } catch (error) {
           console.error("Error:", error);
@@ -34,6 +41,13 @@ export default function ImageGenerate() {
     return (
         <div className="flex flex-col flex-grow mx-auto w-full">
             <h1>Lets Create Some Images!</h1>
+            <Image
+                isBlurred
+                isZoomed
+                alt="NextUI hero Image"
+                src={imageSrc}
+                width={300}
+            />
             <footer className="w-full mx-auto mt-auto">
                 <form onSubmit={handleSubmit} className="w-full">
                     <div className="flex gap-2">
