@@ -1,12 +1,5 @@
 import sys
-
 import modal
-import modal.gpu
-from pathlib import Path
-
-# create a Volume, or retrieve it if it exists
-volume = modal.Volume.from_name("model-weights-vol", create_if_missing=True)
-MODEL_DIR = Path("/models")
 
 image = (
     modal.Image.debian_slim(python_version="3.12")
@@ -34,31 +27,17 @@ with image.imports():
     from fastapi import Response
     from diffusers import StableDiffusion3Pipeline
     from huggingface_hub import login
-    from huggingface_hub import snapshot_download
 
 
-@app.function(
-    volumes={MODEL_DIR: volume},  # "mount" the Volume, sharing it with your function
-    image=image,  # only download dependencies needed here
-)
-def download_model(
-    repo_id: str="stabilityai/stable-diffusion-3.5-large-turbo",
-    revision: str=None,  # include a revision to prevent surprises!
-    ):
 
-    login(token=os.environ["HUGGING_FACE_ACCES_TOKEN"])
-    snapshot_download(repo_id=repo_id, local_dir=MODEL_DIR / repo_id)
-    print(f"Model downloaded to {MODEL_DIR / repo_id}")
-
-@app.cls(image=image, gpu="a100", secrets=[modal.Secret.from_name("custom-secret")], volumes={MODEL_DIR: volume})
+@app.cls(image=image, gpu="a100", secrets=[modal.Secret.from_name("custom-secret")])
 class Model:
     @modal.build()
     @modal.enter()
-    def load_weights(self, repo_id: str="stabilityai/stable-diffusion-3.5-large-turbo"):
-
-        weightLocation = os.path.join(MODEL_DIR, repo_id)
-        # login(token=os.environ["HUGGING_FACE_ACCES_TOKEN"])
-        self.pipe = StableDiffusion3Pipeline.from_pretrained(weightLocation, torch_dtype=torch.bfloat16)
+    def load_weights(self):
+        repo_id = "stabilityai/stable-diffusion-3.5-large-turbo"
+        login(token=os.environ["HUGGING_FACE_ACCES_TOKEN"])
+        self.pipe = StableDiffusion3Pipeline.from_pretrained(repo_id, torch_dtype=torch.bfloat16)
         self.pipe = self.pipe.to("cuda")
 
 
