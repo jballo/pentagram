@@ -13,7 +13,7 @@ export async function POST(request: Request) {
     // For now, we'll just echo back the text
     const start = new Date().getTime();
 
-    const url = new URL("https://jballo--pent-img-gen-api-model-generate-dev.modal.run/");
+    const url = new URL("https://jballo--pent-img-gen-api-model-generate.modal.run/");
 
     url.searchParams.set("prompt", text);
 
