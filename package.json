@@ -10,6 +10,8 @@
     "format:fix": "prettier --write \"**/*.{js,jsx,ts,tsx,json,md}\""
   },
   "dependencies": {
+    "@clerk/nextjs": "^6.9.6",
+    "@clerk/themes": "^2.2.3",
     "@nextui-org/image": "^2.2.3",
     "@nextui-org/system": "^2.4.4",
     "@nextui-org/theme": "^2.4.3",
