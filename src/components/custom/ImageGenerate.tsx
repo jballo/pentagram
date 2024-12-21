@@ -24,11 +24,20 @@ export default function ImageGenerate() {
             body: JSON.stringify({ text: inputText }),
           });
     
-          const blob = await response.blob();
+          const data = await response.json();
 
-          const src = URL.createObjectURL(blob);
+          if(!data.success){
+            throw new Error(data.error || "Failed to generate image");
+          }
 
-          setImageSrc(src);
+          if(data.imageUrl){
+            // const img = new Image();
+            // img.onload = () => {
+            //   setImageSrc(data.imageUrl);
+            // };
+            // img.src = data.imageUrl;
+            setImageSrc(data.imageUrl);
+          }
 
           setInputText("");
         } catch (error) {
