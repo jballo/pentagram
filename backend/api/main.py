@@ -88,8 +88,8 @@ class Model:
     secrets=[modal.Secret.from_name("API_KEY")]
 )
 def keep_warm():
-    health_url = "https://jballo--pent-img-gen-api-model-health-dev.modal.run"
-    generate_url = "https://jballo--pent-img-gen-api-model-generate-dev.modal.run"
+    health_url = "https://jballo--pent-img-gen-api-model-health.modal.run"
+    generate_url = "https://jballo--pent-img-gen-api-model-generate.modal.run"
 
     # First check health endpoint (no api key needed)
     health_response = requests.get(health_url)
