@@ -1,19 +1,19 @@
 "use server";
 
+export async function userExists(id: string) {
 
-export async function generateImage(text: string) {
     try {
-        const response = await fetch(`http://localhost:3000/api/generate-image`, {
+        const response = await fetch(`http://localhost:3000/api/user-exists`, {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
                 "X-API-SECRET": process.env.API_SECRET || "",
             },
-            body: JSON.stringify({ text }),
-        })
+            body: JSON.stringify({ id }),
+        });
 
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
+        if(!response.ok) {
+            throw new Error(`HTTPS error! status: ${response.status}`);
         }
 
         const data = await response.json();
@@ -24,7 +24,7 @@ export async function generateImage(text: string) {
         return {
             success: false,
             error:
-                error instanceof Error ? error.message : "Failed to generate image",
-        };
+                error instanceof Error ? error.message : "Failed to check if user exists",
+        }
     }
 }
