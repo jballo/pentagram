@@ -5,40 +5,36 @@ import { Image } from "@nextui-org/image";
 import { Card, CardContent, CardTitle } from "../ui/card";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "../ui/accordion";
 
+interface ImageGeneratorProps {
+  generateImage: (
+    text: string
+  ) => Promise<{ success: boolean; imageUrl?: string; error?: string; }>;
+}
 
-
-export default function ImageGenerate() {
+export default function ImageGenerate({ generateImage }: ImageGeneratorProps) {
     const [inputText, setInputText] = useState("");
-      const [isLoading, setIsLoading] = useState(false);
+    const [isLoading, setIsLoading] = useState(false);
 
-      const [imageSrc, setImageSrc] = useState("https://nextui.org/images/hero-card-complete.jpeg")
+    const [imageSrc, setImageSrc] = useState("https://nextui.org/images/hero-card-complete.jpeg")
     
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setIsLoading(true);
     
         try {
-          const response = await fetch("/api/generate-image", {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({ text: inputText }),
-          });
-    
-          const data = await response.json();
+          const result = await generateImage(inputText);
 
-          if(!data.success){
-            throw new Error(data.error || "Failed to generate image");
+          if(!result.success){
+            throw new Error(result.error || "Failed to generate image");
           }
 
-          if(data.imageUrl){
+          if(result.imageUrl){
             // const img = new Image();
             // img.onload = () => {
             //   setImageSrc(data.imageUrl);
             // };
             // img.src = data.imageUrl;
-            setImageSrc(data.imageUrl);
+            setImageSrc(result.imageUrl);
           }
 
           setInputText("");

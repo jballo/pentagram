@@ -9,8 +9,13 @@ export async function POST(request: Request) {
 
     console.log("Text: ",text);
 
-    // TODO: Call your Image Generation API here
-    // For now, we'll just echo back the text
+    const apiSecret = request.headers.get("X-API-SECRET");
+    
+    if (apiSecret !== process.env.API_SECRET) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401});
+    }
+
+    // Call Image Generation API
     const start = new Date().getTime();
 
     const url = new URL("https://jballo--pent-img-gen-api-model-generate.modal.run/");
