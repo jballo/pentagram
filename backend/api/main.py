@@ -82,9 +82,9 @@ class Model:
         return {"status": "healthy", "timestamp": datetime.now(timezone.utc).isoformat()}
 
 
-# Warm-keeping function that runs every 5 minutes
+# Warm-keeping function that runs every 5 minutes between 6AM to 6PM
 @app.function(
-    schedule=modal.Cron("*/5 * * * *"),
+    schedule=modal.Cron("*/5 6-18 * * *"),
     secrets=[modal.Secret.from_name("API_KEY")]
 )
 def keep_warm():
@@ -94,8 +94,3 @@ def keep_warm():
     # First check health endpoint (no api key needed)
     health_response = requests.get(health_url)
     print(f"Health check at: {health_response.json()['timestamp']}")
-
-    # Then make a test request to generate endpoint with API Key
-    # headers = {"X-API-Key": os.environ["API_KEY"]}
-    # generate_response = requests.get(generate_url, headers=headers)
-    # print(f"Generate endpoint tested successfully at: {datetime.now(timezone.utc).isoformat()}")
