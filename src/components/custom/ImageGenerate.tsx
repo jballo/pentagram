@@ -123,7 +123,7 @@ export default function ImageGenerate({ generateImage }: ImageGeneratorProps) {
                         className="w-full"
                     />
                   </div>
-                  <Card className="p-4 sm:w-full lg:w-1/4">
+                  {/* <Card className="p-4 sm:w-full lg:w-1/4">
                     <CardTitle>
                       Generated History
                     </CardTitle>
@@ -138,7 +138,7 @@ export default function ImageGenerate({ generateImage }: ImageGeneratorProps) {
                         Image C
                       </p>
                     </CardContent>
-                  </Card>
+                  </Card> */}
                 </div>
               </CardContent>
             </Card>
