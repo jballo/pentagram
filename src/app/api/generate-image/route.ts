@@ -18,7 +18,7 @@ export async function POST(request: Request) {
     // Call Image Generation API
     const start = new Date().getTime();
 
-    const url = new URL("https://jballo--pent-img-gen-api-model-generate.modal.run/");
+    const url = new URL(process.env.GENERATE_IMAGE_ENDPOINT || "");
 
     url.searchParams.set("prompt", text);
 

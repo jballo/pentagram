@@ -7,6 +7,7 @@ import requests
 
 image = (
     modal.Image.debian_slim(python_version="3.12")
+    .apt_install("git")
     .pip_install(
         "accelerate==0.33.0",
         "diffusers==0.31.0",
@@ -15,8 +16,10 @@ image = (
         "sentencepiece==0.2.0",
         "torch==2.5.1",
         "torchvision==0.20.1",
-        "transformers~=4.44.0",
+        "git+https://github.com/huggingface/transformers@main",
         "requests",
+        "bitsandbytes",
+        "t5",
     )
     .env({"HF_HUB_ENABLE_HF_TRANSFER": "1"})  # faster downloads
 )
@@ -32,6 +35,10 @@ with image.imports():
     from fastapi import Response
     from diffusers import StableDiffusion3Pipeline
     from huggingface_hub import login
+    from diffusers import BitsAndBytesConfig, SD3Transformer2DModel
+
+
+
 
 
 
@@ -51,7 +58,28 @@ class Model:
 
         self.pipe = StableDiffusion3Pipeline.from_pretrained(repo_id, torch_dtype=torch.bfloat16)
 
-        self.pipe = self.pipe.to("cuda")
+        nf4_config = BitsAndBytesConfig(
+            load_in_4bit=True,
+            bnb_4bit_quant_type="nf4",
+            bnb_4bit_compute_dtype=torch.bfloat16
+        )
+        model_nf4 = SD3Transformer2DModel.from_pretrained(
+            repo_id,
+            subfolder="transformer",
+            quantization_config=nf4_config,
+            torch_dtype=torch.bfloat16
+        )
+
+        self.pipe = StableDiffusion3Pipeline.from_pretrained(
+            repo_id, 
+            transformer=model_nf4,
+            torch_dtype=torch.bfloat16
+        )
+        self.pipe.enable_model_cpu_offload()
+
+        # self.pipe = self.pipe.to("cuda")
+
+
         self.API_KEY = os.environ["API_KEY"]
 
 
@@ -68,6 +96,7 @@ class Model:
 
         image = self.pipe(
             prompt,
+            height=656, width=992,
             num_inference_steps=4,
             guidance_scale=0.0,
         ).images[0]
@@ -88,9 +117,8 @@ class Model:
     secrets=[modal.Secret.from_name("API_KEY")]
 )
 def keep_warm():
-    health_url = "https://jballo--pent-img-gen-api-model-health.modal.run"
-    generate_url = "https://jballo--pent-img-gen-api-model-generate.modal.run"
+    health_endpoint = os.environ["HEALTH_ENDPOINT"]
 
     # First check health endpoint (no api key needed)
-    health_response = requests.get(health_url)
+    health_response = requests.get(health_endpoint)
     print(f"Health check at: {health_response.json()['timestamp']}")
