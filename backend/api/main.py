@@ -10,7 +10,7 @@ image = (
     .apt_install("git")
     .pip_install(
         "accelerate==0.33.0",
-        "diffusers==0.31.0",
+        "diffusers==0.32.1",
         "fastapi[standard]==0.115.4",
         "huggingface-hub[hf_transfer]==0.25.2",
         "sentencepiece==0.2.0",
@@ -20,6 +20,7 @@ image = (
         "requests",
         "bitsandbytes",
         "t5",
+        "torchao"
     )
     .env({"HF_HUB_ENABLE_HF_TRANSFER": "1"})  # faster downloads
 )
@@ -52,35 +53,31 @@ class Model:
     @modal.build()
     @modal.enter()
     def load_weights(self):
-        repo_id = "stabilityai/stable-diffusion-3.5-large-turbo"
 
         login(token=os.environ["HUGGING_FACE_ACCESS_TOKEN"])
 
-        self.pipe = StableDiffusion3Pipeline.from_pretrained(repo_id, torch_dtype=torch.bfloat16)
+        from diffusers import FluxPipeline, FluxTransformer2DModel, TorchAoConfig
 
-        nf4_config = BitsAndBytesConfig(
-            load_in_4bit=True,
-            bnb_4bit_quant_type="nf4",
-            bnb_4bit_compute_dtype=torch.bfloat16
-        )
-        model_nf4 = SD3Transformer2DModel.from_pretrained(
-            repo_id,
+        model_id = "black-forest-labs/FLUX.1-schnell"
+        dtype = torch.bfloat16
+
+        quantization_config = TorchAoConfig("int8wo")
+        transformer = FluxTransformer2DModel.from_pretrained(
+            model_id,
             subfolder="transformer",
-            quantization_config=nf4_config,
-            torch_dtype=torch.bfloat16
+            quantization_config=quantization_config,
+            torch_dtype=dtype,
         )
 
-        self.pipe = StableDiffusion3Pipeline.from_pretrained(
-            repo_id, 
-            transformer=model_nf4,
-            torch_dtype=torch.bfloat16
+        self.pipe = FluxPipeline.from_pretrained(
+            model_id,
+            transformer=transformer,
+            torch_dtype=dtype,
         )
-        self.pipe.enable_model_cpu_offload()
-
-        # self.pipe = self.pipe.to("cuda")
-
-
+        self.pipe.to("cuda")
         self.API_KEY = os.environ["API_KEY"]
+
+
 
 
 
@@ -95,10 +92,7 @@ class Model:
             )
 
         image = self.pipe(
-            prompt,
-            height=656, width=992,
-            num_inference_steps=4,
-            guidance_scale=0.0,
+            prompt, num_inference_steps=2, guidance_scale=0.0, max_sequence_length=512, width=1008, height=658
         ).images[0]
 
         buffer = io.BytesIO()
