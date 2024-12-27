@@ -17,7 +17,8 @@ image = (
         "torch==2.5.1",
         "git+https://github.com/huggingface/transformers@main",
         "requests",
-        "torchao"
+        "torchao",
+        "sentencepiece"
     )
     .env({"HF_HUB_ENABLE_HF_TRANSFER": "1"})  # faster downloads
 )
@@ -71,7 +72,8 @@ class Model:
         self.API_KEY = os.environ["API_KEY"]
 
     # Method to verify API key for authorization
-    @modal.method()
+    # @modal.method()
+    # @staticmethod
     def verify_auth_header(self, api_key):
         if api_key != self.API_KEY:
             raise HTTPException(
@@ -174,7 +176,7 @@ def keep_warm():
 
 
 
-# Function to trigger image generation at 6:03 AM to pre-load the model for user requests
+# Function to trigger image generation at 6:03 AM to pre-load the model to be ready for first inference and onwards
 @app.function(
     schedule=modal.Cron("3 6 * * *"),  # Cron for 6:03 AM (UTC) daily
     secrets=[modal.Secret.from_name("API_KEY")]

@@ -1,7 +1,7 @@
 "use server";
 
 
-export async function generateImage(text: string) {
+export async function generateImage(text: string, count: number) {
     try {
         const response = await fetch(`http://localhost:3000/api/generate-image`, {
             method: "POST",
@@ -9,7 +9,7 @@ export async function generateImage(text: string) {
                 "Content-Type": "application/json",
                 "X-API-SECRET": process.env.API_SECRET || "",
             },
-            body: JSON.stringify({ text }),
+            body: JSON.stringify({ text, count }),
         })
 
         if (!response.ok) {
