@@ -28,7 +28,7 @@ export async function POST(request: Request) {
       method: "GET",
       headers: {
         "X-API-Key": process.env.API_KEY || "",
-        Accept: "image/jpeg"
+        Accept: "multipart/mixed"
       }
     });
     
@@ -37,8 +37,7 @@ export async function POST(request: Request) {
     const timeElapsedSeconds = elapsed / 1000;
     console.log("Time to generate image: ", timeElapsedSeconds, "s");
 
-
-    if (!response.ok){
+    if (!response.ok) {
       const errorText = await response.text();
       console.error("API Response: ", errorText);
       throw new Error(
@@ -46,24 +45,49 @@ export async function POST(request: Request) {
       );
     }
 
-    // console.log(response);
-    // const blob = await response.blob();
-    // const headers = new Headers();
-    // headers.set("Content-Type", "image/*");
-    // return new NextResponse(blob, { status: 200, statusText: "OK", headers});
+    const buffer = await response.arrayBuffer();
+    const contentType = response.headers.get("content-type");
+    const boundary = contentType?.split("boundary=")[1];
 
-    const imageBuffer = await response.arrayBuffer();
+    if (!boundary) {
+      throw new Error("No boundary found in multipart response");
+    }
 
-    const filename = `${crypto.randomUUID()}.jpg`;
+    // Process the multipart response correctly
+    const parts = Buffer.from(buffer)
+      .toString('binary')
+      .split(`--${boundary}`)
+      .filter(part => part.includes('Content-Type: image/jpeg'));
 
-    const blob = await put(filename, imageBuffer, {
-      access: "public",
-      contentType: "image/jpeg",
-    });
+    const images = await Promise.all(parts.map(async part => {
+      // Find the actual image data after headers
+      const imageStart = part.indexOf('\r\n\r\n') + 4;
+      const imageData = part.slice(imageStart);
+      
+      if (!imageData) return null;
+
+      // Convert binary data to base64
+      const base64Data = Buffer.from(imageData, 'binary').toString('base64');
+      
+      // Generate unique filename and upload to blob storage
+      const filename = `${crypto.randomUUID()}.jpg`;
+      const blob = await put(filename, Buffer.from(base64Data, 'base64'), {
+        access: "public",
+        contentType: "image/jpeg",
+      });
+
+      return blob.url;
+    }));
+
+    const validImages = images.filter(Boolean);
+
+    if (validImages.length === 0) {
+      throw new Error("No valid images found in response");
+    }
 
     return NextResponse.json({
       success: true,
-      imageUrl: blob.url,
+      imageUrls: validImages
     });
 
   } catch (error) {

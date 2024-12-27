@@ -4,6 +4,7 @@ import modal
 from fastapi import Response, HTTPException, Query, Request
 from datetime import datetime, timezone
 import requests
+from fastapi.responses import StreamingResponse
 
 image = (
     modal.Image.debian_slim(python_version="3.12")
@@ -78,7 +79,14 @@ class Model:
         self.API_KEY = os.environ["API_KEY"]
 
 
+    @modal.method()
+    def generate_image(self, prompt="Trees"):
+        print(prompt)
+        image = self.pipe(
+            prompt, num_inference_steps=2, guidance_scale=0.0, max_sequence_length=512, width=1008, height=658
+        ).images[0]
 
+        return image
 
 
     @modal.web_endpoint()
@@ -91,13 +99,42 @@ class Model:
                 detail = "Unauthorized",
             )
 
-        image = self.pipe(
-            prompt, num_inference_steps=2, guidance_scale=0.0, max_sequence_length=512, width=1008, height=658
-        ).images[0]
+        prompt_list = [prompt, prompt]
+        image_buffers = []
+        for img in self.generate_image.map(prompt_list):
+            buffer = io.BytesIO()
+            img.save(buffer, format="JPEG")
+            image_buffers.append(buffer.getvalue())
 
-        buffer = io.BytesIO()
-        image.save(buffer, format="JPEG")
-        return Response(content=buffer.getvalue(), media_type="image/jpeg")
+
+        # Create multipart response with proper byte handling
+        boundary = b'--boundary--'
+        parts = []
+        
+
+        for img in image_buffers:
+            # Convert content length to bytes
+            content_length = str(len(img)).encode()
+            
+            part = (
+                b'\r\n'
+                + boundary + b'\r\n'
+                b'Content-Type: image/jpeg\r\n'
+                b'Content-Length: ' + content_length + b'\r\n\r\n'
+                + img
+            )
+            parts.append(part)
+        
+        # Add final boundary
+        parts.append(b'\r\n' + boundary + b'--\r\n')
+        
+        # Join all parts into single bytes object
+        body = b''.join(parts)
+        
+        return Response(
+            content=body,
+            media_type=f'multipart/mixed; boundary={boundary[2:-2].decode()}'
+        )
     
     @modal.web_endpoint()
     def health(self):

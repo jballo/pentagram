@@ -8,14 +8,14 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "..
 interface ImageGeneratorProps {
   generateImage: (
     text: string
-  ) => Promise<{ success: boolean; imageUrl?: string; error?: string; }>;
+  ) => Promise<{ success: boolean; imageUrls?: string[]; error?: string; }>;
 }
 
 export default function ImageGenerate({ generateImage }: ImageGeneratorProps) {
     const [inputText, setInputText] = useState("");
     const [isLoading, setIsLoading] = useState(false);
 
-    const [imageSrc, setImageSrc] = useState("https://nextui.org/images/hero-card-complete.jpeg")
+    const [imageUrls, setImageUrls] = useState<string[]>(["https://nextui.org/images/hero-card-complete.jpeg", "https://nextui.org/images/hero-card-complete.jpeg"])
     
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -28,13 +28,18 @@ export default function ImageGenerate({ generateImage }: ImageGeneratorProps) {
             throw new Error(result.error || "Failed to generate image");
           }
 
-          if(result.imageUrl){
-            // const img = new Image();
-            // img.onload = () => {
-            //   setImageSrc(data.imageUrl);
-            // };
-            // img.src = data.imageUrl;
-            setImageSrc(result.imageUrl);
+          if(result.imageUrls && result.imageUrls.length > 0){
+            // Ensure we are setting exactly two images, with a fallback for less
+            const newImageUrls = [
+              result.imageUrls[0] || "https://nextui.org/images/hero-card-complete.jpeg",
+              result.imageUrls[1] || result.imageUrls[0] || "https://nextui.org/images/hero-card-complete.jpeg"
+            ];
+            setImageUrls(newImageUrls);
+          } else {
+            setImageUrls([
+              "https://nextui.org/images/hero-card-complete.jpeg", 
+              "https://nextui.org/images/hero-card-complete.jpeg"
+            ]);
           }
 
           setInputText("");
@@ -118,7 +123,15 @@ export default function ImageGenerate({ generateImage }: ImageGeneratorProps) {
                         isBlurred
                         isZoomed
                         alt="NextUI hero Image"
-                        src={imageSrc}
+                        src={imageUrls[0]}
+                        // width={800}
+                        className="w-full"
+                    />
+                     <Image
+                        isBlurred
+                        isZoomed
+                        alt="NextUI hero Image"
+                        src={imageUrls[1]}
                         // width={800}
                         className="w-full"
                     />

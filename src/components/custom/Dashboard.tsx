@@ -11,7 +11,7 @@ import { useEffect, useState } from "react";
 interface ImageGeneratorProps {
   generateImage: (
     text: string
-  ) => Promise<{ success: boolean; imageUrl?: string; error?: string; }>;
+  ) => Promise<{ success: boolean; imageUrls?: string[]; error?: string; }>;
 }
 
 interface UserCreationProps {
