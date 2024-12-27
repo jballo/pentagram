@@ -5,9 +5,10 @@ import crypto from "crypto";
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { text } = body;
+    const { text, count } = body;
 
     console.log("Text: ",text);
+    console.log("Count: ", count);
 
     const apiSecret = request.headers.get("X-API-SECRET");
     
@@ -21,8 +22,9 @@ export async function POST(request: Request) {
     const url = new URL(process.env.GENERATE_IMAGE_ENDPOINT || "");
 
     url.searchParams.set("prompt", text);
+    url.searchParams.set("imgCount", count);
 
-    console.log("Requesting URL: ", url.toString());
+    // console.log("Requesting URL: ", url.toString());
 
     const response = await fetch(url.toString(),{
       method: "GET",

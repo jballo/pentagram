@@ -1,13 +1,15 @@
 "use client";
 
-import { useState } from "react";
+import { ChangeEvent, useState } from "react";
 import { Image } from "@nextui-org/image";
 import { Card, CardContent, CardTitle } from "../ui/card";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "../ui/accordion";
+import { Input } from "../ui/input";
 
 interface ImageGeneratorProps {
   generateImage: (
-    text: string
+    text: string,
+    count: number
   ) => Promise<{ success: boolean; imageUrls?: string[]; error?: string; }>;
 }
 
@@ -15,33 +17,31 @@ export default function ImageGenerate({ generateImage }: ImageGeneratorProps) {
     const [inputText, setInputText] = useState("");
     const [isLoading, setIsLoading] = useState(false);
 
-    const [imageUrls, setImageUrls] = useState<string[]>(["https://nextui.org/images/hero-card-complete.jpeg", "https://nextui.org/images/hero-card-complete.jpeg"])
+    const [imageUrls, setImageUrls] = useState<string[]>(["https://nextui.org/images/hero-card-complete.jpeg"])
+    const [imgCount, setImgCount] = useState<number>(1);
     
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setIsLoading(true);
     
         try {
-          const result = await generateImage(inputText);
+          const result = await generateImage(inputText, imgCount);
 
           if(!result.success){
             throw new Error(result.error || "Failed to generate image");
           }
 
           if(result.imageUrls && result.imageUrls.length > 0){
-            // Ensure we are setting exactly two images, with a fallback for less
-            const newImageUrls = [
-              result.imageUrls[0] || "https://nextui.org/images/hero-card-complete.jpeg",
-              result.imageUrls[1] || result.imageUrls[0] || "https://nextui.org/images/hero-card-complete.jpeg"
-            ];
-            setImageUrls(newImageUrls);
-          } else {
-            setImageUrls([
-              "https://nextui.org/images/hero-card-complete.jpeg", 
-              "https://nextui.org/images/hero-card-complete.jpeg"
-            ]);
-          }
+            console.log("Image count from api: ", result.imageUrls.length);
+            const images: string[] = [];
+            for(let i = 0; i < result.imageUrls.length; i++){
+              images.push(result.imageUrls[i]);
+            }
 
+            setImageUrls(images);
+          }
+          
+          setImgCount(1);
           setInputText("");
         } catch (error) {
           console.error("Error:", error);
@@ -49,6 +49,11 @@ export default function ImageGenerate({ generateImage }: ImageGeneratorProps) {
           setIsLoading(false);
         }
     };
+
+    const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
+      const value = e.target.valueAsNumber;
+      setImgCount(value);
+    }
 
     return (
         // <div className="flex flex-col flex-grow mx-auto w-full">
@@ -65,6 +70,14 @@ export default function ImageGenerate({ generateImage }: ImageGeneratorProps) {
                                 className="flex-1 p-3 rounded-lg bg-black/[.05] dark:bg-white/[.06] border border-black/[.08] dark:border-white/[.145] focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white border-black dark:border-white uppercase bg-white text-black transition duration-200 text-sm shadow-[1px_1px_rgba(0,0,0),2px_2px_rgba(0,0,0),3px_3px_rgba(0,0,0),4px_4px_rgba(0,0,0),5px_5px_0px_0px_rgba(0,0,0)] dark:shadow-[1px_1px_rgba(255,255,255),2px_2px_rgba(255,255,255),3px_3px_rgba(255,255,255),4px_4px_rgba(255,255,255),5px_5px_0px_0px_rgba(255,255,255)]"
                                 placeholder="Describe the image you want to generate..."
                                 disabled={isLoading}
+                            />
+                            <Input 
+                              type="number"
+                              min={1}
+                              max={3}
+                              value={imgCount}
+                              onChange={handleChange}
+                              className="w-28"
                             />
                             <button 
                               type="submit"
@@ -119,22 +132,18 @@ export default function ImageGenerate({ generateImage }: ImageGeneratorProps) {
                 </Accordion>
                 <div className="flex">
                   <div className="sm:w-full lg:w-3/4">
-                    <Image
-                        isBlurred
-                        isZoomed
-                        alt="NextUI hero Image"
-                        src={imageUrls[0]}
-                        // width={800}
-                        className="w-full"
-                    />
-                     <Image
-                        isBlurred
-                        isZoomed
-                        alt="NextUI hero Image"
-                        src={imageUrls[1]}
-                        // width={800}
-                        className="w-full"
-                    />
+                    {(imageUrls && imageUrls.length > 0) && 
+                      imageUrls.map((img, index) => (
+                        <Image key={index}
+                            isBlurred
+                            isZoomed
+                            alt="NextUI hero Image"
+                            src={imageUrls[index]}
+                            // width={800}
+                            className="w-full"
+                        />
+                      ))
+                    }
                   </div>
                   <Card className="p-4 sm:w-full lg:w-1/4">
                     <CardTitle>

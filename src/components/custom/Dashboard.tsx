@@ -10,7 +10,8 @@ import { useEffect, useState } from "react";
 
 interface ImageGeneratorProps {
   generateImage: (
-    text: string
+    text: string,
+    count: number
   ) => Promise<{ success: boolean; imageUrls?: string[]; error?: string; }>;
 }
 
