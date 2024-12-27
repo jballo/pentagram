@@ -83,10 +83,22 @@ class Model:
     def generate_image(self, prompt="Trees"):
         print(prompt)
         image = self.pipe(
-            prompt, num_inference_steps=2, guidance_scale=0.0, max_sequence_length=512, width=1008, height=658
+            prompt, num_inference_steps=2, guidance_scale=0.0, max_sequence_length=512, width=1008, height=512
         ).images[0]
+        buffer = io.BytesIO()
+        image.save(buffer, format="JPEG")
+        img = buffer.getvalue()
+        boundary = b'--boundary--'
+        content_length = str(len(img)).encode()
 
-        return image
+        part = (
+            b'\r\n'
+            + boundary + b'\r\n'
+            b'Content-Type: image/jpeg\r\n'
+            b'Content-Length: ' + content_length + b'\r\n\r\n'
+            + img
+        )
+        return part
 
 
     @modal.web_endpoint()
@@ -100,33 +112,46 @@ class Model:
             )
 
         prompt_list = [prompt, prompt]
-        image_buffers = []
-        for img in self.generate_image.map(prompt_list):
-            buffer = io.BytesIO()
-            img.save(buffer, format="JPEG")
-            image_buffers.append(buffer.getvalue())
-
-
+        # image_buffers = []
         # Create multipart response with proper byte handling
         boundary = b'--boundary--'
         parts = []
-        
+        for img in self.generate_image.map(prompt_list):
+            # buffer = io.BytesIO()
+            # img.save(buffer, format="JPEG")
+            # # image_buffers.append(buffer.getvalue())
+            # img = buffer.getvalue()
+            # # Convert content length to bytes
+            # content_length = str(len(img)).encode()
+            # part = (
+            #     b'\r\n'
+            #     + boundary + b'\r\n'
+            #     b'Content-Type: image/jpeg\r\n'
+            #     b'Content-Length: ' + content_length + b'\r\n\r\n'
+            #     + img
+            # )
+            # parts.append(part)
+            parts.append(img)
 
-        for img in image_buffers:
-            # Convert content length to bytes
-            content_length = str(len(img)).encode()
-            
-            part = (
-                b'\r\n'
-                + boundary + b'\r\n'
-                b'Content-Type: image/jpeg\r\n'
-                b'Content-Length: ' + content_length + b'\r\n\r\n'
-                + img
-            )
-            parts.append(part)
-        
         # Add final boundary
         parts.append(b'\r\n' + boundary + b'--\r\n')
+        
+
+        # for img in image_buffers:
+        #     # Convert content length to bytes
+        #     content_length = str(len(img)).encode()
+            
+        #     part = (
+        #         b'\r\n'
+        #         + boundary + b'\r\n'
+        #         b'Content-Type: image/jpeg\r\n'
+        #         b'Content-Length: ' + content_length + b'\r\n\r\n'
+        #         + img
+        #     )
+        #     parts.append(part)
+        
+        # # Add final boundary
+        # parts.append(b'\r\n' + boundary + b'--\r\n')
         
         # Join all parts into single bytes object
         body = b''.join(parts)
