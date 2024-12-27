@@ -22,7 +22,7 @@ export async function POST(request: Request) {
 
     url.searchParams.set("prompt", text);
 
-    console.log("Requesting URL: ", url.toString());
+    // console.log("Requesting URL: ", url.toString());
 
     const response = await fetch(url.toString(),{
       method: "GET",
