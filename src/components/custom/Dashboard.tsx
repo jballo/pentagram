@@ -1,11 +1,11 @@
 "use client";
 
 import Header from "@/components/custom/header";
-import ImageFeed from "@/components/custom/ImageFeed";
+// import ImageFeed from "@/components/custom/ImageFeed";
 import ImageGenerate from "@/components/custom/ImageGenerate";
-import UserProfile from "@/components/custom/UserProfile";
-import { useUser } from "@clerk/nextjs";
-import { useEffect, useState } from "react";
+// import UserProfile from "@/components/custom/UserProfile";
+// import { useUser } from "@clerk/nextjs";
+import {  useState } from "react";
 
 
 interface ImageGeneratorProps {
@@ -35,38 +35,38 @@ interface DashboardProps {
   userExists: UserExistenceProps["userExists"];
 }
 
-export default function Dashboard({ generateImage, createUser, userExists }: DashboardProps) {
-  const { user, isSignedIn } = useUser();
-  const [view, setView] = useState<'feed' | 'generate' | 'profile'>("feed");
+export default function Dashboard({ generateImage }: DashboardProps) {
+  // const { user, isSignedIn } = useUser();
+  const [view, setView] = useState<'feed' | 'generate' | 'profile'>("generate");
 
-  useEffect( () => {
-    const userCreate = async () => {
-      if(user && isSignedIn) {
-        const id = user.id;
-        const name = user.fullName || "";
-        const email = user.primaryEmailAddress?.emailAddress || "";
+  // useEffect( () => {
+  //   const userCreate = async () => {
+  //     if(user && isSignedIn) {
+  //       const id = user.id;
+  //       const name = user.fullName || "";
+  //       const email = user.primaryEmailAddress?.emailAddress || "";
   
-        try {
-          const userDoesExist = await userExists(id);
+  //       try {
+  //         const userDoesExist = await userExists(id);
           
-          if (!userDoesExist.userDoesExist) {
-            const result = await createUser(id, name, email);
+  //         if (!userDoesExist.userDoesExist) {
+  //           const result = await createUser(id, name, email);
     
-            if(!result.success) {
-              throw new Error(result.error || "Failed to create user");
-            }
+  //           if(!result.success) {
+  //             throw new Error(result.error || "Failed to create user");
+  //           }
     
-            console.log("Succesfully created user");
-          }
+  //           console.log("Succesfully created user");
+  //         }
   
-        } catch (error) {
-          console.error("Error: ", error);
-        }
-      }
-    }
-    userCreate();
+  //       } catch (error) {
+  //         console.error("Error: ", error);
+  //       }
+  //     }
+  //   }
+  //   userCreate();
     
-  }, [user, isSignedIn, createUser]);
+  // }, [user, isSignedIn, createUser]);
 
 
 
@@ -79,9 +79,9 @@ export default function Dashboard({ generateImage, createUser, userExists }: Das
       <Header setView={setView} />
       <main className="container mx-auto px-4 py-8 flex-grow flex flex-col">
         {/* Main content can go here */}
-        {view === 'feed' && <ImageFeed />}
+        {/* {view === 'feed' && <ImageFeed />} */}
         {view === 'generate' && <ImageGenerate generateImage={generateImage} />}
-        {view == 'profile' && <UserProfile />}
+        {/* {view == 'profile' && <UserProfile />} */}
       </main>
     </div>
   );

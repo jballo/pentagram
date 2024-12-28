@@ -77,7 +77,7 @@ export default function ImageGenerate({ generateImage }: ImageGeneratorProps) {
                               max={3}
                               value={imgCount}
                               onChange={handleChange}
-                              className="w-28"
+                              className="w-28 p-3 h-12 rounded-lg bg-black/[.05] dark:bg-white/[.06] border border-black/[.08] dark:border-white/[.145] focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white border-black dark:border-white uppercase bg-white text-black transition duration-200 text-sm shadow-[1px_1px_rgba(0,0,0),2px_2px_rgba(0,0,0),3px_3px_rgba(0,0,0),4px_4px_rgba(0,0,0),5px_5px_0px_0px_rgba(0,0,0)] dark:shadow-[1px_1px_rgba(255,255,255),2px_2px_rgba(255,255,255),3px_3px_rgba(255,255,255),4px_4px_rgba(255,255,255),5px_5px_0px_0px_rgba(255,255,255)]"
                             />
                             <button 
                               type="submit"
@@ -93,7 +93,7 @@ export default function ImageGenerate({ generateImage }: ImageGeneratorProps) {
                   <AccordionItem value="item-1">
                     <AccordionTrigger>
                       <h3 className="text-2xl">
-                        Select Model (Default: stable-diffusion-3.5-large-turbo)
+                        Select Model (Default: black-forest-labs/FLUX.1-schnell)
                       </h3>
                     </AccordionTrigger>
                     <AccordionContent>
@@ -101,7 +101,7 @@ export default function ImageGenerate({ generateImage }: ImageGeneratorProps) {
                         <Card className="bg-cyan-200 py-4 border-black dark:border-white uppercase  text-black transition duration-200 text-sm shadow-[1px_1px_rgba(0,0,0),2px_2px_rgba(0,0,0),3px_3px_rgba(0,0,0),4px_4px_rgba(0,0,0),5px_5px_0px_0px_rgba(0,0,0)] dark:shadow-[1px_1px_rgba(255,255,255),2px_2px_rgba(255,255,255),3px_3px_rgba(255,255,255),4px_4px_rgba(255,255,255),5px_5px_0px_0px_rgba(255,255,255)]">
                           <CardContent>
                             <p className="text-medium">
-                              stable-diffusion-3.5-large-turbo
+                              black-forest-labs/FLUX.1-schnell
                             </p>
                           </CardContent>
                         </Card>
@@ -115,7 +115,7 @@ export default function ImageGenerate({ generateImage }: ImageGeneratorProps) {
                         <Card className="py-4 bg-white border-black dark:border-white uppercas text-black transition duration-200 text-sm shadow-[1px_1px_rgba(0,0,0),2px_2px_rgba(0,0,0),3px_3px_rgba(0,0,0),4px_4px_rgba(0,0,0),5px_5px_0px_0px_rgba(0,0,0)] dark:shadow-[1px_1px_rgba(255,255,255),2px_2px_rgba(255,255,255),3px_3px_rgba(255,255,255),4px_4px_rgba(255,255,255),5px_5px_0px_0px_rgba(255,255,255)]">
                           <CardContent>
                             <p className="text-medium">
-                              (Coming Soon) black-forest-labs/FLUX.1-schnell
+                              (Coming Soon) black-forest-labs/FLUX.1-dev
                             </p>
                           </CardContent>
                         </Card>
@@ -131,7 +131,7 @@ export default function ImageGenerate({ generateImage }: ImageGeneratorProps) {
                   </AccordionItem>
                 </Accordion>
                 <div className="flex">
-                  <div className="sm:w-full lg:w-3/4">
+                  <div className="flex flex-row gap-5 sm:w-full lg:w-3/4">
                     {(imageUrls && imageUrls.length > 0) && 
                       imageUrls.map((img, index) => (
                         <Image key={index}
@@ -145,7 +145,7 @@ export default function ImageGenerate({ generateImage }: ImageGeneratorProps) {
                       ))
                     }
                   </div>
-                  <Card className="p-4 sm:w-full lg:w-1/4">
+                  {/* <Card className="p-4 sm:w-full lg:w-1/4">
                     <CardTitle>
                       Generated History
                     </CardTitle>
@@ -160,7 +160,7 @@ export default function ImageGenerate({ generateImage }: ImageGeneratorProps) {
                         Image C
                       </p>
                     </CardContent>
-                  </Card>
+                  </Card> */}
                 </div>
               </CardContent>
             </Card>
