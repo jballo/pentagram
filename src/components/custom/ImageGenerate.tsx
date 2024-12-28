@@ -2,7 +2,7 @@
 
 import { ChangeEvent, useState } from "react";
 import { Image } from "@nextui-org/image";
-import { Card, CardContent, CardTitle } from "../ui/card";
+import { Card, CardContent } from "../ui/card";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "../ui/accordion";
 import { Input } from "../ui/input";
 
