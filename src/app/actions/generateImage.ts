@@ -3,7 +3,7 @@
 
 export async function generateImage(text: string, count: number) {
     try {
-        const response = await fetch(`http://localhost:3000/api/generate-image`, {
+        const response = await fetch(`http://127.0.0.1:3000/api/generate-image`, {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
