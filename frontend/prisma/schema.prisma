@@ -27,8 +27,10 @@ model User {
 
 model Post {
   id        Int       @id @default(autoincrement())
-  content   String    @db.Text
-  source    String    @unique  
+  title     String
+  model     String
+  prompt    String    @db.Text
+  url       String    @unique  
   authorId  String
 
   createdAt DateTime  @default(now())

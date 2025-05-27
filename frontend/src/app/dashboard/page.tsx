@@ -27,7 +27,7 @@ export default function DashboardPage() {
     try {
       // const result = await generateImage(inputText, imgCount);
 
-      const response = await fetch(`/api/images`, {
+      const response = await fetch(`/api/images/generate`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
