@@ -1,6 +1,12 @@
--- AlterTable
-ALTER TABLE "User" ADD COLUMN     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-ADD COLUMN     "updatedAt" TIMESTAMP(3);
+-- CreateTable
+CREATE TABLE "User" (
+    "id" TEXT NOT NULL,
+    "email" TEXT NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "User_pkey" PRIMARY KEY ("id")
+);
 
 -- CreateTable
 CREATE TABLE "Post" (
@@ -51,6 +57,12 @@ CREATE TABLE "Share" (
 );
 
 -- CreateIndex
+CREATE UNIQUE INDEX "User_email_key" ON "User"("email");
+
+-- CreateIndex
+CREATE INDEX "User_email_idx" ON "User"("email");
+
+-- CreateIndex
 CREATE UNIQUE INDEX "Post_source_key" ON "Post"("source");
 
 -- CreateIndex
@@ -82,9 +94,6 @@ CREATE INDEX "Share_postId_idx" ON "Share"("postId");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "Share_authorId_postId_key" ON "Share"("authorId", "postId");
-
--- CreateIndex
-CREATE INDEX "User_email_idx" ON "User"("email");
 
 -- AddForeignKey
 ALTER TABLE "Post" ADD CONSTRAINT "Post_authorId_fkey" FOREIGN KEY ("authorId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
