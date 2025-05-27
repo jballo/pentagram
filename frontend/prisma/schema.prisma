@@ -1,0 +1,93 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id
+  email     String   @unique
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  posts     Post[]
+  likes     Like[]
+  comments  Comment[]
+  shares    Share[]
+
+  @@index([email])
+}
+
+model Post {
+  id        Int       @id @default(autoincrement())
+  content   String    @db.Text
+  source    String    @unique  
+  authorId  String
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  isDeleted Boolean   @default(false)
+  deletedAt DateTime?
+
+  author    User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  likes     Like[]
+  comments  Comment[]
+  shares    Share[]
+
+  @@index([isDeleted, createdAt])            // Active posts by date
+  @@index([authorId, isDeleted, createdAt])  // User's active posts chronologically
+  @@index([authorId, createdAt])             // User's all posts (including deleted)
+}
+
+model Like {
+  id        Int       @id @default(autoincrement())
+  postId    Int
+  authorId  String
+  createdAt DateTime  @default(now())
+
+  post      Post      @relation(fields: [postId], references: [id], onDelete: Cascade)
+  author    User      @relation(fields: [authorId], references: [id], onDelete: Cascade)
+
+  @@unique([authorId, postId]) // Prevents duplicate likes
+  @@index([postId])            // For counting likes efficiently
+}
+
+model Comment {
+  id           Int        @id @default(autoincrement())
+  content      String     @db.Text
+  postId       Int
+  authorId     String
+
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+  isDeleted    Boolean    @default(false)
+  deletedAt    DateTime?
+
+  author       User       @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  post         Post       @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+  @@index([postId, isDeleted]) // Compound index for active comments
+  @@index([authorId])  // For user's comment history
+  @@index([createdAt]) // For chronological ordering
+}
+
+model Share {
+  id         Int       @id @default(autoincrement())
+  postId     Int
+  authorId   String
+
+  createdAt  DateTime  @default(now())
+
+  post       Post      @relation(fields: [postId], references: [id], onDelete: Cascade)
+  author     User      @relation(fields: [authorId], references: [id], onDelete: Cascade)
+
+  @@unique([authorId, postId]) // Prevents duplicate shares
+  @@index([postId])
+}
