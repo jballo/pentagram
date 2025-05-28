@@ -6,15 +6,8 @@ export async function POST(req: Request) {
   const prisma = new PrismaClient().$extends(withAccelerate());
   try {
     const body = await req.json();
-    const {
-      post_id,
-      post_title,
-      post_model,
-      post_prompt,
-      post_url,
-      post_authorId,
-    } = body;
-    console.log("id: ", post_id);
+    const { post_title, post_model, post_prompt, post_url, post_authorId } =
+      body;
     console.log("title: ", post_title);
     console.log("model: ", post_model);
     console.log("prompt: ", post_prompt);
@@ -23,7 +16,6 @@ export async function POST(req: Request) {
 
     await prisma.post.create({
       data: {
-        id: post_id,
         title: post_title,
         model: post_model,
         prompt: post_prompt,
