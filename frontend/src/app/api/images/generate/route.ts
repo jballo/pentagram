@@ -82,7 +82,10 @@ export async function POST(request: Request) {
           contentType: "image/jpeg",
         });
 
-        return blob.url;
+        return {
+          filename: filename,
+          url: blob.url,
+        };
       })
     );
 
@@ -94,7 +97,7 @@ export async function POST(request: Request) {
 
     return NextResponse.json({
       success: true,
-      imageUrls: validImages,
+      images: validImages,
     });
   } catch (error) {
     console.error("Error processing request: ", error);

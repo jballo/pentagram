@@ -6,18 +6,28 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/atoms/accordion";
+import { Button } from "@/atoms/button";
 import { Card, CardContent } from "@/atoms/card";
 import { Input } from "@/atoms/input";
+import { useUser } from "@clerk/nextjs";
 import { Image } from "@nextui-org/image";
+import { SaveIcon, Text } from "lucide-react";
 import { ChangeEvent, useState } from "react";
 
+interface ImageObj {
+  id: string;
+  title: string;
+  model: string;
+  prompt: string;
+  url: string;
+  authorId: string;
+}
+
 export default function DashboardPage() {
+  const { user } = useUser();
   const [inputText, setInputText] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-
-  const [imageUrls, setImageUrls] = useState<string[]>([
-    "https://nextui.org/images/hero-card-complete.jpeg",
-  ]);
+  const [images, setImages] = useState<ImageObj[]>([]);
   const [imgCount, setImgCount] = useState<number>(1);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -25,7 +35,8 @@ export default function DashboardPage() {
     setIsLoading(true);
 
     try {
-      // const result = await generateImage(inputText, imgCount);
+      const prompt = inputText;
+      const model = "FLUX.1-schnell";
 
       const response = await fetch(`/api/images/generate`, {
         method: "POST",
@@ -44,14 +55,33 @@ export default function DashboardPage() {
 
       const result = await response.json();
 
-      if (result.imageUrls && result.imageUrls.length > 0) {
-        console.log("Image count from api: ", result.imageUrls.length);
-        const images: string[] = [];
-        for (let i = 0; i < result.imageUrls.length; i++) {
-          images.push(result.imageUrls[i]);
+      if (result.images && result.images.length > 0) {
+        console.log("Image count from api: ", result.images.length);
+        // const images: string[] = [];
+        // for (let i = 0; i < result.imageUrls.length; i++) {
+        //   images.push(result.imageUrls[i]);
+        // }
+
+        // setImageUrls(images);
+        if (!user) {
+          throw new Error(`No user signed in`);
         }
 
-        setImageUrls(images);
+        const images: ImageObj[] = [];
+        for (let i = 0; i < result.images.length; i++) {
+          const id: string = result.images[i].filename.split(".")[0];
+          const newImage: ImageObj = {
+            id: id,
+            title: "",
+            model: model,
+            prompt: prompt,
+            url: result.images[i].url,
+            authorId: user.id,
+          };
+          images.push(newImage);
+        }
+
+        setImages(images);
       }
 
       setImgCount(1);
@@ -66,6 +96,53 @@ export default function DashboardPage() {
   const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
     const value = e.target.valueAsNumber;
     setImgCount(value);
+  };
+
+  const updatePrompt = (id: string, title: string) => {
+    console.log("id: ", id);
+    const newImages: ImageObj[] = images.map(img => {
+      if (img.id === id) {
+        return {
+          ...img,
+          title: title,
+        };
+      }
+      return img;
+    });
+    setImages(newImages);
+  };
+
+  const uploadImage = async (id: string) => {
+    try {
+      console.log("id: ", id);
+
+      const selectedImage = images.find(img => img.id === id);
+
+      if (!selectedImage) throw new Error(`Failed to select image for upload`);
+
+      const response = await fetch(`/api/images/upload`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          post_id: selectedImage.id,
+          post_title: selectedImage.title,
+          post_model: selectedImage.model,
+          post_prompt: selectedImage.prompt,
+          post_url: selectedImage.url,
+          post_authorId: selectedImage.authorId,
+        }),
+      });
+
+      if (!response.ok) throw new Error(`Failed to upload image`);
+
+      const result = await response.json();
+
+      console.log("Result: ", result);
+    } catch (error) {
+      console.log("Error: ", error);
+    }
   };
 
   return (
@@ -101,23 +178,54 @@ export default function DashboardPage() {
           </div>
         </form>
       </div>
-      <div className="flex flex-row gap-6">
-        <div className="flex flex-col">
-          {imageUrls &&
-            imageUrls.length > 0 &&
-            imageUrls.map((img, index) => (
+      <div className="flex flex-row gap-3">
+        <div className="flex flex-col w-2/3">
+          {images.length > 0 ? (
+            <div className="flex flex-col w-full gap-8">
+              {images.map((img, index) => (
+                <div key={index} className="flex flex-col w-full gap-2">
+                  <Image
+                    isBlurred
+                    isZoomed
+                    alt="NextUI hero Image"
+                    src={img.url}
+                    // width={800}
+                    className="w-full"
+                  />
+                  <div className="w-full flex flex-row gap-3">
+                    <Text />
+                    Prompt: {img.prompt}
+                  </div>
+                  <div className="flex flex-row w-full gap-3">
+                    <Input
+                      type="text"
+                      placeholder="Title here..."
+                      value={img.title}
+                      onChange={e => updatePrompt(img.id, e.target.value)}
+                    />
+                    <Button
+                      variant="outline"
+                      onClick={() => uploadImage(img.id)}
+                    >
+                      <SaveIcon />
+                    </Button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="flex flex-col w-full">
               <Image
-                key={index}
                 isBlurred
                 isZoomed
                 alt="NextUI hero Image"
-                src={imageUrls[index]}
-                // width={800}
+                src="https://nextui.org/images/hero-card-complete.jpeg"
                 className="w-full"
               />
-            ))}
+            </div>
+          )}
         </div>
-        <Accordion type="single" collapsible>
+        <Accordion type="single" collapsible className="w-1/3">
           <AccordionItem value="item-1">
             <AccordionTrigger>
               <h3 className="text-2xl">
