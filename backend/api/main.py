@@ -10,17 +10,20 @@ image = (
     modal.Image.debian_slim(python_version="3.12")
     .apt_install("git")
     .pip_install(
-        "accelerate==0.33.0",
-        "diffusers==0.32.1",
-        "fastapi[standard]==0.115.4",
-        "huggingface-hub[hf_transfer]==0.25.2",
-        "torch==2.5.1",
+        "accelerate==1.7.0",
+        "diffusers==0.33.1",
+        "fastapi[standard]==0.115.12",
+        "huggingface-hub[hf_transfer]==0.32.2",
+        "torch==2.7.0",
         "git+https://github.com/huggingface/transformers@main",
-        "requests",
-        "torchao",
-        "sentencepiece"
+        "requests==2.32.3",
+        "torchao==0.11.0",
+        "sentencepiece==0.2.0"
     )
-    .env({"HF_HUB_ENABLE_HF_TRANSFER": "1"})  # faster downloads
+    .env({
+        "HF_HUB_CACHE": "/cache",
+        "HF_HUB_ENABLE_HF_TRANSFER": "1"
+    })  # faster downloads
 )
 
 # Initialize the modal application with the defined image
@@ -37,15 +40,16 @@ with image.imports():
 
 
 # Define a class to load model weights and handle image generation
+cache_vol = modal.Volume.from_name("hf-hub-cache")
 @app.cls(
     image=image, 
     gpu="a100", 
-    secrets=[modal.Secret.from_name("API_KEY")],
-    container_idle_timeout=300
+    secrets=[modal.Secret.from_name("pent-secrets")],
+    scaledown_window=300,
+    volumes={"/cache": cache_vol}
 )
 class Model:
     # Method to load model weights from Hugging Face Hub
-    @modal.build() # Indicates this function will build the environment and dependencies
     @modal.enter() # Ensures this is the first method called when the container is initialized
     def load_weights(self):
         # Log into Hugging Face Hub using the access token from environment variable
@@ -110,7 +114,7 @@ class Model:
 
 
     # Web endpoint to handle image generation requests
-    @modal.web_endpoint()
+    @modal.fastapi_endpoint()
     def generate(self, request: Request, prompt: str = Query(..., description="The prompt for image generation"), imgCount: int = Query(..., description="The number of images to produces", ge=1,  le=3)):
 
         # Check the API key in request headers for authentication
@@ -142,7 +146,7 @@ class Model:
         )
     
     # Web endpoint for a health check to keep the container warm
-    @modal.web_endpoint()
+    @modal.fastapi_endpoint()
     def health(self, request: Request):
         """Lightweight endpoint for keeping the container warm"""
         # Check the API key for authentication
@@ -152,50 +156,50 @@ class Model:
         return {"status": "healthy", "timestamp": datetime.now(timezone.utc).isoformat()}
 
 
-# Function to keep the container warm by pinging the health endpoint every 5 minutes
-@app.function(
-    schedule=modal.Cron("*/5 6-18 * * *"), # Cron expression to run every 5 minutes between 6 AM (UTC) and 6 PM (UTC)
-    secrets=[modal.Secret.from_name("API_KEY")]
-)
-def keep_warm():
-    health_endpoint = os.environ["HEALTH_ENDPOINT"]
-    api_key = os.environ["API_KEY"]  # Fetch the API key from environment variables
+# # Function to keep the container warm by pinging the health endpoint every 5 minutes
+# @app.function(
+#     schedule=modal.Cron("*/5 6-18 * * *"), # Cron expression to run every 5 minutes between 6 AM (UTC) and 6 PM (UTC)
+#     secrets=[modal.Secret.from_name("API_KEY")]
+# )
+# def keep_warm():
+#     health_endpoint = os.environ["HEALTH_ENDPOINT"]
+#     api_key = os.environ["API_KEY"]  # Fetch the API key from environment variables
     
 
-    # Headers with API key for authentication
-    headers = {
-        "X-API-Key": api_key
-    }
-    # Perform a health check to keep the container active
-    health_response = requests.get(health_endpoint, headers=headers)
-    if health_response.status_code == 200:
-        print("Container is now warm.")
-        print(f"Health check at: {health_response.json()['timestamp']}")
-    else:
-        print("Container failed to warm up.")
+#     # Headers with API key for authentication
+#     headers = {
+#         "X-API-Key": api_key
+#     }
+#     # Perform a health check to keep the container active
+#     health_response = requests.get(health_endpoint, headers=headers)
+#     if health_response.status_code == 200:
+#         print("Container is now warm.")
+#         print(f"Health check at: {health_response.json()['timestamp']}")
+#     else:
+#         print("Container failed to warm up.")
 
 
 
-# Function to trigger image generation at 6:03 AM to pre-load the model to be ready for first inference and onwards
-@app.function(
-    schedule=modal.Cron("3 6 * * *"),  # Cron for 6:03 AM (UTC) daily
-    secrets=[modal.Secret.from_name("API_KEY")]
-)
-def generate_daily_image():
-    generate_endpoint = os.environ["GENERATE_ENDPOINT"]
-    prompt = "Sunset"  # Example prompt for the image generation
-    api_key = os.environ["API_KEY"]  # Fetch the API key from environment variables
+# # Function to trigger image generation at 6:03 AM to pre-load the model to be ready for first inference and onwards
+# @app.function(
+#     schedule=modal.Cron("3 6 * * *"),  # Cron for 6:03 AM (UTC) daily
+#     secrets=[modal.Secret.from_name("API_KEY")]
+# )
+# def generate_daily_image():
+#     generate_endpoint = os.environ["GENERATE_ENDPOINT"]
+#     prompt = "Sunset"  # Example prompt for the image generation
+#     api_key = os.environ["API_KEY"]  # Fetch the API key from environment variables
 
-    # Headers with API key for authentication
-    headers = {
-        "X-API-Key": api_key
-    }
+#     # Headers with API key for authentication
+#     headers = {
+#         "X-API-Key": api_key
+#     }
 
-    # Call the image generation endpoint to ensure the model is ready
-    print("Loading model weights...")
-    response = requests.get(generate_endpoint, params={"prompt": prompt, "imgCount": 1}, headers=headers)
+#     # Call the image generation endpoint to ensure the model is ready
+#     print("Loading model weights...")
+#     response = requests.get(generate_endpoint, params={"prompt": prompt, "imgCount": 1}, headers=headers)
     
-    if response.status_code == 200:
-        print("Model ready for inferences.")
-    else:
-        print(f"Failed to make model ready.")
+#     if response.status_code == 200:
+#         print("Model ready for inferences.")
+#     else:
+#         print(f"Failed to make model ready.")

@@ -6,15 +6,15 @@ import { auth } from "@clerk/nextjs/server";
 export async function POST(request: Request) {
   try {
     await auth.protect();
-    
+
     const body = await request.json();
     const { text, count } = body;
 
-    console.log("Text: ",text);
+    console.log("Text: ", text);
     console.log("Count: ", count);
 
     // const apiSecret = request.headers.get("X-API-SECRET");
-    
+
     // if (apiSecret !== process.env.API_SECRET) {
     //   return NextResponse.json({ error: "Unauthorized" }, { status: 401});
     // }
@@ -29,14 +29,14 @@ export async function POST(request: Request) {
 
     // console.log("Requesting URL: ", url.toString());
 
-    const response = await fetch(url.toString(),{
+    const response = await fetch(url.toString(), {
       method: "GET",
       headers: {
-        "X-API-Key": process.env.API_KEY || "",
-        Accept: "multipart/mixed"
-      }
+        "X-API-Key": process.env.API_SECRET || "",
+        Accept: "multipart/mixed",
+      },
     });
-    
+
     const elapsed = new Date().getTime() - start;
     console.log("Time to generate image: ", elapsed, "ms");
     const timeElapsedSeconds = elapsed / 1000;
@@ -60,29 +60,31 @@ export async function POST(request: Request) {
 
     // Process the multipart response correctly
     const parts = Buffer.from(buffer)
-      .toString('binary')
+      .toString("binary")
       .split(`--${boundary}`)
-      .filter(part => part.includes('Content-Type: image/jpeg'));
+      .filter(part => part.includes("Content-Type: image/jpeg"));
 
-    const images = await Promise.all(parts.map(async part => {
-      // Find the actual image data after headers
-      const imageStart = part.indexOf('\r\n\r\n') + 4;
-      const imageData = part.slice(imageStart);
-      
-      if (!imageData) return null;
+    const images = await Promise.all(
+      parts.map(async part => {
+        // Find the actual image data after headers
+        const imageStart = part.indexOf("\r\n\r\n") + 4;
+        const imageData = part.slice(imageStart);
 
-      // Convert binary data to base64
-      const base64Data = Buffer.from(imageData, 'binary').toString('base64');
-      
-      // Generate unique filename and upload to blob storage
-      const filename = `${crypto.randomUUID()}.jpg`;
-      const blob = await put(filename, Buffer.from(base64Data, 'base64'), {
-        access: "public",
-        contentType: "image/jpeg",
-      });
+        if (!imageData) return null;
 
-      return blob.url;
-    }));
+        // Convert binary data to base64
+        const base64Data = Buffer.from(imageData, "binary").toString("base64");
+
+        // Generate unique filename and upload to blob storage
+        const filename = `${crypto.randomUUID()}.jpg`;
+        const blob = await put(filename, Buffer.from(base64Data, "base64"), {
+          access: "public",
+          contentType: "image/jpeg",
+        });
+
+        return blob.url;
+      })
+    );
 
     const validImages = images.filter(Boolean);
 
@@ -92,9 +94,8 @@ export async function POST(request: Request) {
 
     return NextResponse.json({
       success: true,
-      imageUrls: validImages
+      imageUrls: validImages,
     });
-
   } catch (error) {
     console.error("Error processing request: ", error);
     return NextResponse.json(
