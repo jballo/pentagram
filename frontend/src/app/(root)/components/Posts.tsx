@@ -2,7 +2,8 @@ import { Card, CardContent, CardFooter, CardTitle } from "@/atoms/card";
 import { Image } from "@nextui-org/image";
 import { PrismaClient } from "@prisma/client/edge";
 import { withAccelerate } from "@prisma/extension-accelerate";
-import { HeartIcon, MessageCircle, Share2Icon, Text } from "lucide-react";
+import { MessageCircle, Share2Icon, Text } from "lucide-react";
+import HeartButton from "./HeartButton";
 
 
 export default async function Posts() {
@@ -14,6 +15,7 @@ export default async function Posts() {
             createdAt: 'desc'
         }
     });
+
 
     return (<div className="grid sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-10">
         {posts.map((post) => (
@@ -37,9 +39,7 @@ export default async function Posts() {
                     </div>
                     <div className="flex flex-row w-full justify-between">
                         <div className="flex gap-4">
-                            <button>
-                                <HeartIcon />
-                            </button>
+                            <HeartButton id={post.id} />
                             <button>
                                 <MessageCircle />
                             </button>
