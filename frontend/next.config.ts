@@ -9,6 +9,12 @@ const nextConfig: NextConfig = {
           hostname: 'nextui.org',
           port: '',
           pathname: '/images/*',
+        },
+        {
+          protocol: 'https',
+          hostname: 'ogzcfno7x9sosrqw.public.blob.vercel-storage.com',
+          port: '',
+          pathname: '/*'
         }
       ],
   }
