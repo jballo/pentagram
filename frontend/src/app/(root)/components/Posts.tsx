@@ -7,14 +7,24 @@ export default async function Posts() {
 
     const prisma = new PrismaClient().$extends(withAccelerate());
 
-    const posts = await prisma.post.findMany({
-        orderBy: {
-            createdAt: 'desc'
+    // const posts = await prisma.post.findMany({
+    //     orderBy: {
+    //         createdAt: 'desc'
+    //     }
+    // });
+
+    const postsAndLikesQuery = await prisma.post.findMany({
+        include: {
+            likes: true
         }
     });
 
+    console.log("postsAndLikesQuery: ", postsAndLikesQuery);
+
+
+
 
     return (<div className="grid sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-10">
-        <PostsClient initialPosts={posts} />
+        <PostsClient initialPosts={postsAndLikesQuery} />
     </div>);
 }

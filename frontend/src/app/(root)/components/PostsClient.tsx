@@ -6,6 +6,14 @@ import { HeartIcon, MessageCircle, Share2Icon, Text } from "lucide-react";
 import Image from "next/image";
 // import { useOptimistic } from "react";
 
+
+interface Like {
+    id: number;
+    createdAt: Date;
+    authorId: string;
+    postId: number;
+}
+
 interface Post {
     model: string;
     createdAt: Date;
@@ -17,6 +25,7 @@ interface Post {
     updatedAt: Date;
     isDeleted: boolean;
     deletedAt: Date | null;
+    likes: Like[]
 }
 
 
@@ -71,7 +80,12 @@ export default function PostsClient({ initialPosts }: { initialPosts: Post[] }) 
                             <button
                                 onClick={() => toggleLike(post.id)}
                             >
-                                <HeartIcon />
+                                {post.likes.find((liked) => liked.authorId === userId) ? (
+                                    <HeartIcon className="fill-red-600 text-red-600" />
+
+                                ) : (
+                                    <HeartIcon />
+                                )}
                             </button>
                             <button>
                                 <MessageCircle />
