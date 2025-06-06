@@ -25,28 +25,28 @@ export async function POST(req: Request) {
             // Like exists for post -> delete
             console.log("Like already exists -> unliked")
 
-            const deleteLikeQuery = await prisma.like.delete({
+            const deleteLikeQueryResponse = await prisma.like.delete({
                 where: {
                     id: checkLikeQuery.id
                 }
             });
 
-            console.log("deleteLikeQuery: ", deleteLikeQuery);
-
-        } else {
-            //  like doesn't exist for post -> create
-            console.log("Like doesn't exist -> like")
-            const createLikeQuery = await prisma.like.create({
-                data: {
-                    postId: postId,
-                    authorId: userId,
-                }
-            });
-
-            console.log("createLikeQuery: ", createLikeQuery);
+            console.log("deleteLikeQueryResponse: ", deleteLikeQueryResponse);
+            
+            return NextResponse.json({ content: deleteLikeQueryResponse}, {status: 200});
         }
+        //  like doesn't exist for post -> create
+        console.log("Like doesn't exist -> like")
+        const createLikeQueryResponse = await prisma.like.create({
+            data: {
+                postId: postId,
+                authorId: userId,
+            }
+        });
 
-        return NextResponse.json({ content: "Post (un)liked"}, {status: 200});
+        console.log("createLikeQueryResponse: ", createLikeQueryResponse);
+
+        return NextResponse.json({ content: createLikeQueryResponse}, {status: 200});
     } catch (error) {
         console.log("Error: ", error);
         return NextResponse.json({error: "Failed to (un)like post"}, {status: 500});

@@ -5,11 +5,11 @@ import { cn } from "@/lib/utils";
 import { useAuth } from "@clerk/nextjs";
 import { HeartIcon, MessageCircle, Share2Icon, Text } from "lucide-react";
 import Image from "next/image";
-// import { useOptimistic } from "react";
+import { useOptimistic, useState } from "react";
 
 
 interface Like {
-    id: number;
+    id?: number;
     createdAt: Date;
     authorId: string;
     postId: number;
@@ -36,12 +36,48 @@ interface PostClientProps {
 
 export default function PostsClient({ initialPosts }: PostClientProps) {
     const { userId, isSignedIn, isLoaded } = useAuth();
-    // const [optimisticPosts, setOptimisticPosts] = useOptimistic(
-    //     initialPosts,
-    //     (state, id) => state.map((post) => post.id === id ? {...post, } )
-    // );
+    const [posts, setPosts] = useState<Post[]>(initialPosts);
+    const [optimisticPosts, setOptimisticPosts] = useOptimistic(
+        posts,
+        (state, id: number) => {
+            console.log("id (optimistic): ", id);
 
+            const currentPost: Post | undefined = state.find((pst) => pst.id === id);
+            if (currentPost === undefined || !userId) return state;
 
+            const like = currentPost.likes.find((lk) => lk.authorId === userId);
+            let newLikes: Like[] = [];
+            if (like === undefined) {
+                // like does not exist => create like
+                newLikes = [
+                    ...currentPost.likes,
+                    {
+                        id: -1,
+                        createdAt: new Date(),
+                        authorId: userId,
+                        postId: currentPost.id
+                    },
+                ];
+            } else {
+                // like exists => delete like
+                newLikes = currentPost.likes.filter((lk) => lk.authorId !== userId);
+            }
+
+            const newPosts = state.map((post) => {
+                if (post.id === id) {
+                    return {
+                        ...post,
+                        likes: newLikes
+                    }
+                }
+                return post;
+            });
+
+            console.log("newPosts: ", newPosts);
+
+            return newPosts;
+        }
+    );
 
     const toggleLike = async (postId: number) => {
 
@@ -62,7 +98,18 @@ export default function PostsClient({ initialPosts }: PostClientProps) {
 
             const result = await response.json();
 
-            console.log("Result: ", result);
+            const content = result.content;
+            console.log("content: ", content);
+
+            setPosts(prevPosts => prevPosts.map(post => {
+                if (post.id !== postId) return post;
+                const newLikes = post.likes.find(like => like.authorId === userId) ? post.likes.filter(like => like.authorId !== userId) : [...post.likes, content];
+                return {
+                    ...post,
+                    likes: newLikes
+                }
+            }));
+
 
         } catch (error) {
             console.log("Error: ", error);
@@ -71,12 +118,12 @@ export default function PostsClient({ initialPosts }: PostClientProps) {
 
 
     return (<>
-        {initialPosts.map((post) => (
+        {optimisticPosts.map((post) => (
             <Card
                 key={post.id}
                 className="flex flex-col p-10 gap-4 w-30 rounded-lg bg-black/[.05] dark:bg-white/[.06] border border-black/[.08] dark:border-white/[.145] focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white border-black dark:border-white uppercase bg-white text-black transition duration-200 text-sm shadow-[1px_1px_rgba(0,0,0),2px_2px_rgba(0,0,0),3px_3px_rgba(0,0,0),4px_4px_rgba(0,0,0),5px_5px_0px_0px_rgba(0,0,0)] dark:shadow-[1px_1px_rgba(255,255,255),2px_2px_rgba(255,255,255),3px_3px_rgba(255,255,255),4px_4px_rgba(255,255,255),5px_5px_0px_0px_rgba(255,255,255)]"
             >
-                <CardTitle>{post.prompt}</CardTitle>
+                <CardTitle>{post.title}</CardTitle>
                 <CardContent className="py-0">
                     <Image
                         src={post.url}
@@ -95,13 +142,18 @@ export default function PostsClient({ initialPosts }: PostClientProps) {
                     </div>
                     <div className="flex flex-row w-full justify-between">
                         <div className="flex gap-4">
-                            <button
-                                onClick={() => toggleLike(post.id)}
+                            <form
+                                action={async () => {
+                                    setOptimisticPosts(post.id);
+                                    await toggleLike(post.id);
+                                }}
                             >
-                                <HeartIcon className={cn({
-                                    "fill-red-600 text-red-600": post.likes.find((liked) => liked.authorId === userId)
-                                })} />
-                            </button>
+                                <button type="submit">
+                                    <HeartIcon className={cn({
+                                        "fill-red-600 text-red-600": post.likes.find((liked) => liked.authorId === userId)
+                                    })} />
+                                </button>
+                            </form>
                             <button>
                                 <MessageCircle />
                             </button>
