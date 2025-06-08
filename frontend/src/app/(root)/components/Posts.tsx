@@ -3,7 +3,7 @@ import { withAccelerate } from "@prisma/extension-accelerate";
 import PostsClient from "./PostsClient";
 
 export const dynamic = 'force-dynamic';
-
+export const revalidate = 0;
 
 export default async function Posts() {
 
