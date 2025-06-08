@@ -2,6 +2,8 @@ import { PrismaClient } from "@prisma/client/edge";
 import { withAccelerate } from "@prisma/extension-accelerate";
 import PostsClient from "./PostsClient";
 
+export const dynamic = 'force-dynamic';
+
 
 export default async function Posts() {
 
@@ -16,6 +18,9 @@ export default async function Posts() {
     const postsAndLikesQuery = await prisma.post.findMany({
         include: {
             likes: true
+        },
+        cacheStrategy: {
+            swr: 2
         }
     });
 
