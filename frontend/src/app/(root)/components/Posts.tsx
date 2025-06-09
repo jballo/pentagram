@@ -2,8 +2,7 @@ import { PrismaClient } from "@prisma/client/edge";
 import { withAccelerate } from "@prisma/extension-accelerate";
 import PostsClient from "./PostsClient";
 
-export const dynamic = 'force-dynamic';
-export const revalidate = 0;
+export const revalidate = 0; // Disable caching for this component
 
 export default async function Posts() {
 
@@ -19,9 +18,6 @@ export default async function Posts() {
         include: {
             likes: true
         },
-        cacheStrategy: {
-            swr: 2
-        }
     });
 
     console.log("postsAndLikesQuery: ", postsAndLikesQuery);
