@@ -18,6 +18,7 @@ export default async function Posts() {
         include: {
             likes: true
         },
+        cacheStrategy: { ttl: 0 }
     });
 
     console.log("postsAndLikesQuery: ", postsAndLikesQuery);
