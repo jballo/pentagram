@@ -1,11 +1,13 @@
 import { PrismaClient } from "@prisma/client/edge";
 import { withAccelerate } from "@prisma/extension-accelerate";
 import PostsClient from "./PostsClient";
+import { unstable_noStore as noStore } from "next/cache";
 
 export const revalidate = 0; // Disable caching for this component
 
 export default async function Posts() {
-
+    // prevent caching at the component level
+    noStore();
     const prisma = new PrismaClient().$extends(withAccelerate());
 
     // const posts = await prisma.post.findMany({
