@@ -3,7 +3,7 @@ import { withAccelerate } from "@prisma/extension-accelerate";
 import PostsClient from "./PostsClient";
 import { unstable_noStore as noStore } from "next/cache";
 
-export const revalidate = 0; // Disable caching for this component
+// export const revalidate = 0; // Disable caching for this component
 
 export default async function Posts() {
     // prevent caching at the component level
@@ -20,7 +20,6 @@ export default async function Posts() {
         include: {
             likes: true
         },
-        cacheStrategy: { ttl: 0 }
     });
 
     console.log("postsAndLikesQuery: ", postsAndLikesQuery);
